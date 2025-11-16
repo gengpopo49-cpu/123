@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱心渐变粒子消散</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="heartCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 设置canvas大小为窗口大小
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 粒子类
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 3 - 1.5;
+                this.speedY = Math.random() * 3 - 1.5;
+                this.color = color;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.01 + 0.005;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= this.decay;
+                this.size *= 0.99;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 创建爱心形状的粒子
+        function createHeartParticles() {
+            const particles = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const size = Math.min(canvas.width, canvas.height) / 4;
+            
+            // 爱心参数方程
+            for (let t = 0; t < Math.PI * 2; t += 0.01) {
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                
+                // 调整大小和位置
+                const scaledX = centerX + x * size / 16;
+                const scaledY = centerY + y * size / 16;
+                
+                // 创建渐变颜色
+                const gradient = Math.sin(t) * 0.5 + 0.5;
+                const r = Math.floor(255 * gradient);
+                const g = Math.floor(50 * gradient);
+                const b = Math.floor(100 + 155 * gradient);
+                const color = `rgb(${r}, ${g}, ${b})`;
+                
+                particles.push(new Particle(scaledX, scaledY, color));
+            }
+            
+            return particles;
+        }
+
+        let particles = createHeartParticles();
+
+        // 动画循环
+        function animate() {
+            // 清除画布
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新和绘制粒子
+            particles.forEach((particle, index) => {
+                particle.update();
+                particle.draw();
+                
+                // 移除透明度为0的粒子
+                if (particle.alpha <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            
+            // 如果粒子数量太少，重新创建爱心
+            if (particles.length < 100) {
+                particles = particles.concat(createHeartParticles());
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // 开始动画
+        animate();
+
+        // 窗口大小改变时调整canvas大小
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = createHeartParticles();
+        });
+    </script>
+</body>
+</html>
